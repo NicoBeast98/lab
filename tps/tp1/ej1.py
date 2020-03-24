@@ -4,6 +4,6 @@ class Adder():
 
 
 uso = Adder()
-value = int(input('Numero>'))
+value = int(input('Numero >'))
 ans = uso.adder(value)
 print(ans)

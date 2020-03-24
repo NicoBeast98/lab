@@ -9,7 +9,7 @@ class Adder():
 
 
 use = Adder()
-n = int(input('Numbero >'))
+n = int(input('Numero >'))
 t = int(input('Veces >'))
 ans = use.adderv2(n, t)
 print(ans)
