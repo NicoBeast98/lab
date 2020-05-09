@@ -3,6 +3,8 @@ import argparse
 import multiprocessing as mp
 import array as arr
 
+
+# Defino los argumentos del programa
 def argumentos():
     arg = argparse.ArgumentParser(
         description='''\n
@@ -34,33 +36,7 @@ por cada color una imagen de distinta intensidad
     }
     return info
 
-def main(dicc_datos):
-    colors = ['red','green','blue']
-    procces = []
-    cola = {
-        'red' : mp.SimpleQueue(),
-        'green' : mp.SimpleQueue(),
-        'blue' : mp.SimpleQueue(),
-    }
-    for color in colors:
-        procces.append(
-            mp.Process(
-                target=color_mang,args=(color,dicc_datos,cola[color]),name=color
-            )
-        )
-    detalles = det_img(dicc_datos)
-    line = detalles[1]
-    with open(dicc_datos['file'], 'rb') as img:
-        img.seek(detalles[0])
-        for i in range(3):
-            procces[i].start()
-        while True:
-            for __ in colors:
-                cola[__].put(line)
-            line = img.read(dicc_datos['size'])
-    for i in range(3):
-        procces[i].terminate
-
+# *~Defino a los procesos hijos~*
 def color_mang(color, datos, cola):
     name = datos['file'].split('.')
     inten = datos[color]
@@ -69,37 +45,77 @@ def color_mang(color, datos, cola):
         while True:
             line = cola.get()
             img.write(filter(color, line, inten))
+#~---------------------------~
 
+# Funcion que determina las caracteristicas de la imagen
 def det_img(info):
     with open(info['file'], 'rb') as img:
         info = img.read(100)
-        header = bytes(info)
+        header = bytearray(info)
         pos = header.find(b'255\n')
-        pos += 8
-        new = str(info)
-        new = new.lstrip('b\'')
-        nuevos_det = ''
-        for elem in range(pos):
-            nuevos_det += new[elem]
-        encode = bytes(nuevos_det.encode('utf-8')) # se concatena mal
+        pos += 4
+        n_array = bytearray()
+        cutted = header.split(b'\x0A')
+        if cutted[1].startswith(b'\x23\x20'):
+            cutted.pop(1)
+        for _ in range(3):
+            n_array += bytes(cutted[_]) + b'\x0A'
     img.close()
-    return [pos, encode]
+    return [pos, n_array]
+#~-----------------------------------------------------~
 
-def filter(color, line, iten):
-    n_line = b''
+# Filtro los distintos canales de color
+def filter(color, line, inten):
     if line.find(b'P6') != -1:
         return line
     else:
         if color == 'red':
-            n_line += arr.array('B', line)
-            return n_line
+            return line
         if color == 'green':
-            n_line += arr.array('B', line)
-            return n_line
+            return line
         if color == 'blue':
-            n_line += arr.array('B', line)
-            return n_line
+            return line
+#~-----------------------------------~
 
+# *~~~> Funcion principal del programa <~~~*
+def main(dicc_datos):
+    colors = ['red','green','blue']
+    procces = []
+# Creo una cola por proceso
+    cola = {
+        'red' : mp.SimpleQueue(),
+        'green' : mp.SimpleQueue(),
+        'blue' : mp.SimpleQueue(),
+    }
+# Creo 3 procesos, uno por cada canal de color
+    for color in colors:
+        procces.append(
+            mp.Process(
+                target=color_mang,args=(color,dicc_datos,cola[color]),name=color
+            )
+        )
+# La funcion det_img separa la cabecera de la imagen del resto
+    detalles = det_img(dicc_datos)
+    for c in colors:
+        cola[c].put(detalles[1])
+# Empiezo a leer la imagen que se paso
+    with open(dicc_datos['file'], 'rb') as img:
+        img.seek(detalles[0])
+# Empiezo los 3 procesos
+        for i in range(3):
+            procces[i].start()
+        while True:
+            line = img.read(dicc_datos['size'])
+            for c in colors:
+                cola[c].put(line)
+            if line.__sizeof__() < dicc_datos['size']:
+                for c in colors:
+                    cola[c].put(line)
+                break
+    for i in range(3):
+        procces[i].terminate()
+    print('end')
+#~----------------------------------~
 
 
 if __name__ == "__main__":
