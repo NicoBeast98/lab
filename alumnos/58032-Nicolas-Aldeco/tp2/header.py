@@ -7,7 +7,7 @@ def detHeader(img):
         cutted = header.split(b'\x0A')
         for n in range(3):
             n_array += bytes(cutted[n]) + b'\x0A'
-        raster = len(n_array)
+        raster = len(n_array) + 4
     return [raster, n_array]
 
 

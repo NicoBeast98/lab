@@ -1,8 +1,7 @@
 import os
 import argparse
 import header
-# import worker as w
-# import threading as th
+import worker
 
 
 # Defino los argumentos del programa
@@ -81,29 +80,43 @@ def toNormBytes(byte):
     return bStr
 
 
+def reading(archivo, size):
+    while True:
+        lec = archivo.read(size).hex()
+        if not lec:
+            break
+        x = ""
+        for y in range(size):
+            if lec[y*2:y*2+2] != '':
+                x += lec[y*2:y*2+2] + " "
+        yield x.strip(" ")
+
+
 def main(head, newHead, info):
-    # threads = []
-    # rgbColors = ['red', 'green', 'blue']
-    # for n in rgbColors:
-    #     threads.append(
-    #         th.Thread(w.worker, args=())
-    #         )
+    th = []
+    rgbColors = ['red', 'green', 'blue']
 
     msgFile = open(info['message'], 'rb')   # Abro el msg en bytes
     inputFile = open(info['file'], 'rb')     # IO en bytes
-
     inputFile.seek(head[0])   # Muevo lector al final del head
+
+# Creo una lista con un hilo por cada color
+    for color in rgbColors:
+        th.append(worker.Hilo(color, info['interleave']))
+
+# Genero un string del mensaje a esconder
+    strMsg = ''
+    for msg in reading(msgFile, info['size']):
+        temp = msg.split(' ')
+        for n in range(len(temp)):
+            # msgFile en una sola cadea de str
+            strMsg += toNormBytes(int(temp[n], base=16))
+
     with open(info['exit'], 'wb') as exitFile:
         exitFile.write(newHead[1])  # Inserto cabecera
-        # exitFile.seek() necesario?
-        while True:
-            lec = inputFile.read(info['size'])
-            if not lec:
-                break
-            for by in msgFile.read(info['size']):
-                pass
-            exitFile.write(lec)
-
+        for lec in reading(inputFile, info['size']):
+            lec.split(' ')
+        exitFile.write(lec)
     # Close open files
     msgFile.close()
     inputFile.close()
@@ -123,12 +136,16 @@ if __name__ == "__main__":
         'exit': 'e_dog.ppm'
     }
     # <-->
-    sizeFile = os.path.getsize(info['message'])
+    sizeFileMsg = os.path.getsize(info['message'])
+    sizeFileImg = os.path.getsize(info['file'])
+
+    if sizeFileMsg > sizeFileImg/(8*info['interleave']):
+        raise Exception('No se puede esconder un mensaje tan grande en esta imagen')
 
     head = header.detHeader(info['file'])
     newHead = header.makeNewHeader(head,
                                    str(info['offset']),
                                    str(info['interleave']),
-                                   str(sizeFile)
+                                   str(sizeFileMsg)
                                    )
     main(head, newHead, info)
