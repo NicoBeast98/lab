@@ -1,7 +1,8 @@
 import os
 import argparse
 import header
-import worker
+import threading
+from worker import worker
 
 
 # Defino los argumentos del programa
@@ -93,16 +94,18 @@ def reading(archivo, size):
 
 
 def main(head, newHead, info):
-    th = []
+    th = {}
     rgbColors = ['red', 'green', 'blue']
 
     msgFile = open(info['message'], 'rb')   # Abro el msg en bytes
     inputFile = open(info['file'], 'rb')     # IO en bytes
     inputFile.seek(head[0])   # Muevo lector al final del head
-
 # Creo una lista con un hilo por cada color
     for color in rgbColors:
-        th.append(worker.Hilo(color, info['interleave']))
+        temp = {
+            color: threading.Thread(target=worker(color))
+            }
+        th.update(temp)
 
 # Genero un string del mensaje a esconder
     strMsg = ''
@@ -114,9 +117,18 @@ def main(head, newHead, info):
 
     with open(info['exit'], 'wb') as exitFile:
         exitFile.write(newHead[1])  # Inserto cabecera
-        for lec in reading(inputFile, info['size']):
-            lec.split(' ')
-        exitFile.write(lec)
+        barrera = threading.Barrier(4)
+        th['red'].start()
+        th['green'].start()
+        th['blue'].start()
+        while True:
+            lec = inputFile.read(info['size'])
+            if lec is None:
+                break
+            # Mandar byte del mensaje a cada hilo
+            for byte in strMsg:
+                blocLec = lec
+            exitFile.write(lec)
     # Close open files
     msgFile.close()
     inputFile.close()
@@ -139,7 +151,7 @@ if __name__ == "__main__":
     sizeFileMsg = os.path.getsize(info['message'])
     sizeFileImg = os.path.getsize(info['file'])
 
-    if sizeFileMsg > sizeFileImg/(8*info['interleave']):
+    if sizeFileMsg * info['interleave'] + info['offset'] > sizeFileImg:
         raise Exception('No se puede esconder un mensaje tan grande en esta imagen')
 
     head = header.detHeader(info['file'])
