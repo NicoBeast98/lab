@@ -126,6 +126,8 @@ def main(head, newHead, info):
             if lec is None:
                 break
             # Mandar byte del mensaje a cada hilo
+            # Podria hacer un programa a parte para la lectura de
+            # la imagen.
             for byte in strMsg:
                 blocLec = lec
             exitFile.write(lec)
