@@ -1,20 +1,23 @@
-class Decoder():
-    def __init__(self, mensaje):
-        if mensaje is bytes:
-            # Pasar bytes a string
-            return str(mensaje)
-        else:
-            # Pasar string a bytes
-            bStr = bin(byte)
-            bStr = bStr.lstrip('0b')
-            largo = len(bStr)
-            if largo < 8:
-                strInv = bStr[::-1]
-                emptys = 8 - largo
-                for n in range(emptys):
-                    strInv += '0'
-                bStr = strInv[::-1]
-            return bStr
+def tobits(s):
+    result = []
+    for c in s:
+        bits = bin(ord(c))[2:]
+        bits = '00000000'[len(bits):] + bits
+        result.extend([int(b) for b in bits])
 
-e = Decoder(b'hola')
-print(e)
+    return result
+
+
+def frombits(bits):
+    chars = []
+    for b in range(int(len(bits) / 8)):
+        byte = bits[b*8:(b+1)*8]
+        chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
+    return ''.join(chars)
+
+
+def lectolist(bloc):
+    lista = []
+    for b in bloc:
+        lista.append(b)
+    return lista

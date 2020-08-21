@@ -1,6 +1,8 @@
-def read_head(img):
-    # Leo cabecera para decode
-    pass
+def r_body(img):
+    # Determino inicio del body
+    lec = img.read(100)
+    raster = lec.find(b'\n255') + 5
+    return(raster)
 
 
 def make_head(img, cifrado, offset, interleave, l_total):

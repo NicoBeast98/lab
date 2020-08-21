@@ -1,8 +1,9 @@
 import argparse
 import os
-# from concurrent import futures [Hilos]
 from rot13 import rot13
-from header import make_head
+from header import make_head, r_body
+from bytes_decoder import tobits, lectolist
+from threading import Thread, Barrier
 
 
 class Main():
@@ -14,20 +15,63 @@ class Main():
         self.offset = arg.offset[0]
         self.interleave = arg.interleave[0]
         self.cifrado = arg.cifrado
+        self.byte = None
+        self.msgB = None
 
     def encode(self):
         msgSize = os.path.getsize(self.message)
+        imagen = open(self.file, 'rb')
+        raster = r_body(imagen)
+        imagen.seek(raster)
+
+        redThread = Thread(target=self.worker)
+        greenThread = Thread(target=self.worker)
+        blueThread = Thread(target=self.worker)
+
         if self.cifrado:
             lectura = rot13(open(self.message, 'r').read())
         else:
             lectura = open(self.message, 'r').read()
-        print(lectura)
+        self.msgB = tobits(lectura)
         with open(self.output, 'wb') as encodeImg:
             encodeImg.write(
                 make_head(
                     self.file, self.cifrado, self.offset, self.interleave,
                     msgSize)
             )
+            globalPos = 0
+            while True:
+                lecBloc = imagen.read(self.size)
+                if lecBloc is None:
+                    break
+                else:
+                    lista = lectolist(lecBloc)
+                    # Lectura con interleaves
+                    for pos, by in enumerate(lista):
+                        self.byte = by
+                        if pos % 3 == 0:
+                            redThread.run()
+                        if pos % 3 == 1:
+                            greenThread.run()
+                        if pos % 3 == 2:
+                            blueThread.run()
+                        globalPos += 1
+
+
+    def worker(self):
+        if (self.byte % 2 == 0) and (msgB == 1):
+            self.byte += 1
+            # Sumo uno al byte
+        elif (self.byte % 2 != 0) and (msgB == 0):
+            self.byte -= 1
+            # Resto un al byte
+        else:
+            pass
+            # No modifico el byte
+        
+
+
+    
 
 
 if __name__ == "__main__":
