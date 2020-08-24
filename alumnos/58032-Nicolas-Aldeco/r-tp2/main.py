@@ -2,7 +2,7 @@ import argparse
 import time
 import os
 from rot13 import rot13
-from header import make_head, r_body
+from header import make_head, r_body, read_head
 from bytes_decoder import tobits, listtobytes
 from concurrent.futures import ThreadPoolExecutor
 
@@ -41,12 +41,13 @@ def encode(args):
             break
     body.pop(0)
     # Cifrado rot13
+    mensaje = open(args.message[0], 'r').read()
     if args.cifrado:
         hiloC = ThreadPoolExecutor()
-        res = hiloC.submit(rot13, open(args.message[0], 'r').read())
+        res = hiloC.submit(rot13, mensaje)
         lectura = res.result()
     else:
-        lectura = open(args.message[0], 'r').read()
+        lectura = mensaje
     print(f'Mensaje >> {lectura}')
     msgBits = tobits(lectura)
     hilos = ThreadPoolExecutor(max_workers=3)
@@ -85,6 +86,34 @@ def encode(args):
     end = time.time() - start
     print(f'Tiempo de ejecucion: {end} segundos')
 
+# Valido los ingresos
+def check_validez(info):
+    if info.file[0].find('.ppm') == -1:
+        print('ERROR - La extencion del archivo no es ppm')
+        exit()
+    try:
+        with open(info.file[0], 'r') as _:
+            pass
+    except FileNotFoundError:
+        print('ERROR - El archivo de entrada no existe')
+        exit()
+    try:
+        with open(info.message[0], 'r') as _:
+            pass
+    except FileNotFoundError:
+        print('ERROR - El archivo de mensaje no existe')
+        exit()
+    if info.size[0]%3 != 0:
+        print('ERROR - El tamaño de lectura no es multiplo de 3')
+        exit()
+    cabe = read_head(info.file[0])
+    size_ = os.path.getsize(info.message[0]) * 8 * info.interleave[0] + info.offset[0]
+    if size_ > cabe[1]*cabe[2]:
+        print('ERROR - La imagen no tiene los pixeles suficientes para este mensaje')
+        exit()
+    return True
+# <-~~->
+
 
 if __name__ == "__main__":
     arg = argparse.ArgumentParser(
@@ -104,7 +133,7 @@ if __name__ == "__main__":
     )
     arg.add_argument(
         '-s', '--size', nargs=1, type=int, help='tamano bloque de lectura',
-        default=[256], metavar=''
+        default=[255], metavar=''
     )
     arg.add_argument(
         '-e', '--offset', nargs=1, type=int,
@@ -120,5 +149,6 @@ if __name__ == "__main__":
         '-c', '--cifrado', action='store_true',
         help='aplicar cifrado rot13 al mensaje'
     )
-    test = argparse.Namespace(cifrado=False, file=['dog.ppm'], interleave=[1], message=['manel'], offset=[1], output=['test.ppm'], size=[255])
-    encode(test)
+    args = arg.parse_args()
+    if check_validez(args):
+        encode(args)

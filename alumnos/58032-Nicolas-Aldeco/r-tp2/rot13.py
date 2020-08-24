@@ -4,7 +4,7 @@ def rot13(mensaje):
 
     mensajeNuevo = ""
     for letra in mensaje:
-        if (letra == " "):
+        if (letra == " ") or letra.isalpha() is False:
             mensajeNuevo += letra
         else:
             mensajeNuevo += letras[letra]

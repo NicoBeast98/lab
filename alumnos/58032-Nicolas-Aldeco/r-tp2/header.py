@@ -28,7 +28,7 @@ def make_head(img, cifrado, offset, interleave, l_total):
             new += elem + b'\n'
     return new
 
-def readHeader(file):
+def read_head(file):
     img = open(file, 'rb')
     lines = img.read().splitlines()
     comments = []
