@@ -21,3 +21,10 @@ def lectolist(bloc):
     for b in bloc:
         lista.append(b)
     return lista
+
+
+def listtobytes(lista):
+    byte = bytearray()
+    for n in lista:
+        byte.append(n)
+    return byte
