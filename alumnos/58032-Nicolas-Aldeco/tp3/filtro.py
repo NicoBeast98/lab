@@ -1,5 +1,5 @@
 # Filtro de Colores RGB y Blanco y Negro, para imagenes ppm#
-from concurrent.futures import ThreadPoolExecutor
+from concurrent import futures
 
 
 class Filtro():
@@ -27,41 +27,46 @@ class Filtro():
     def lectura(self, imagen):
         body = []
         pix = []
-        while True:
-            lectura = imagen.read(self.bloque)
-            if not lectura:
-                break
-            for p, b in enumerate(lectura):
-                if p % 3 == 0 and p != 0:
-                    body.append(pix)
-                    pix = []
-                pix.append(b)
-            return body
+        lectura = imagen.read(self.bloque)
+        if not lectura:
+            return None
+        for p, b in enumerate(lectura):
+            if p % 3 == 0 and p != 0:
+                body.append(pix)
+                pix = []
+            pix.append(b)
+        return body
 
     # Filtro de colores e intensidad
-    def filter(self, pixel):
+    def filter(self, bloqP):
+        bloqF = []
         if self.filtro != 3:
-            for pos, by in enumerate(pixel):
-                if pos == self.filtro:
-                    mod = pixel[pos] * self.inten
-                    if mod < 256:
-                        pixel[pos] = int(mod)
+            for pixel in bloqP:
+                for pos, by in enumerate(pixel):
+                    if pos == self.filtro:
+                        mod = pixel[pos] * self.inten
+                        if mod < 256:
+                            pixel[pos] = int(mod)
+                        else:
+                            pixel[pos] = 255
                     else:
-                        pixel[pos] = 255
-                else:
-                    pixel[pos] = 0
-            return pixel
+                        pixel[pos] = 0
+                    newPixel = pixel
+                for by in newPixel:
+                    bloqF.append(by)
+            return self.listtobytes(bloqF)
         else:
-            suma = pixel[0] + pixel[1] + pixel[2]
-            newValue = suma/3
-            mod = newValue * self.inten
-            if mod < 256:
-                newValue = int(mod)
-            else:
-                newValue = 255
-            for n in range(3):
-                pixel[n] = int(newValue)
-            return pixel
+            for pixel in bloqP:
+                suma = pixel[0] + pixel[1] + pixel[2]
+                newValue = suma/3
+                mod = int(newValue * self.inten)
+                if mod < 256:
+                    newValue = mod
+                else:
+                    newValue = 255
+                for _ in range(3):
+                    bloqF.append(newValue)
+            return self.listtobytes(bloqF)
 
     # Cabecera de imagen ppm
     def head(self, file):
@@ -85,7 +90,7 @@ class Filtro():
                 header_end += len(line) + 1
                 break
         header = f'P6\n{width} {height}\n{max_c}\n'
-        return header_end, width, height, max_c, comments, bytearray(header, 'utf8')
+        return header_end, width, height, max_c, comments, bytearray(header, 'utf-8')
 
     def listtobytes(self, lista):
         byte = bytearray()
@@ -94,41 +99,29 @@ class Filtro():
         return byte
 
     def main(self):
-        hilos = ThreadPoolExecutor()
-        newImg = []
-        # Incerto cabecera de imagen:
-        for by in self.cabecera[5]:
+        hilos = futures.ThreadPoolExecutor()
+        # Incerto cabecera en nueva imagen
+        newImg = bytearray()
+        for by in self.cabecera[-1]:
             newImg.append(by)
-        print(newImg)
+        # ----
         with open(self.imagen, 'rb') as img:
             img.seek(self.cabecera[0])
-            bloqF = []
             while True:
-                try:
-                    for pixel in self.lectura(img):
-                        _worker = hilos.submit(self.filter, pixel)
-                        newPix = _worker.result()
-                        for n in range(3):
-                            bloqF.append(newPix[n])
-                    # print(bloqF)
-                except:
+                bloqP = self.lectura(img)
+                if not bloqP:
                     break
-            print('out')
-
-
-        # for pos, pix in enumerate(listPixels):
-        #     listPixels[pos] = self.filter(pix)
-        # newBody = []
-        # for pix in listPixels:
-        #     for j in pix:
-        #         newBody.append(j)
-        # newBytes = self.listtobytes(newBody)
-        # newImg.write(newBytes)
+                for pix in bloqP:
+                    for by in pix:
+                        newImg.append(by)
+                # _worker = hilos.submit(self.filter, bloqP)
+                # for by in _worker.result():
+                #     newImg.append(by)
+        return newImg
 
 
 # TESTING#
 if __name__ == "__main__":
-    obj = Filtro('dog.ppm', 'b&w', 1.3, 255)
-    # newImg = open('f_dog.ppm', 'wb')
-    # newImg.write(b'P6\n# Imagen ppm\n200 298\n255\n')
-    obj.main()
+    obj = Filtro('dog.ppm', 'red', 1.3, 100)
+    newImg = open('f_dog.ppm', 'wb')
+    newImg.write(obj.main())
