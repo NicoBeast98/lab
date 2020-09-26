@@ -115,7 +115,7 @@ class Filtro():
 
 
 # TESTING#
-if __name__ == "__main__":
-    obj = Filtro('dog.ppm', 'b&w', 1, 1000)
-    newImg = open('f_dog.ppm', 'wb')
-    newImg.write(obj.main())
+# if __name__ == "__main__":
+#     obj = Filtro('dog.ppm', 'b&w', 1, 1000)
+#     newImg = open('f_dog.ppm', 'wb')
+#     newImg.write(obj.main())
