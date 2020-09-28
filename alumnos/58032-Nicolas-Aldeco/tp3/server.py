@@ -41,16 +41,16 @@ class Handler(BaseRequestHandler):
         # Manejo si la peticion es correcta
         dicFile = self.fileLookUp(_get, root, content)
         if dicFile['nice'] is True:
-            file = dicFile['file']
             self.request.sendall(dicFile['head'])
-            if file == '_bits_':
-                self.request.sendall(dicFile['byts'])
-            else:
-                while True:
-                    lec = file.read(argms.size[0])
-                    if not lec:
-                        break
-                    self.request.sendall(lec)
+            file = dicFile['file']
+            while True:
+                lec = file.read(argms.size[0])
+                if not lec:
+                    break
+                self.request.sendall(lec)
+            if os.path.isfile('temp.ppm'):
+                os.remove('temp.ppm')
+            exit()
         else:
             self.request.sendall(dicFile['errorNameH'])
             self.request.sendall(open(dicFile['errorFile'], 'rb').read())
@@ -103,7 +103,6 @@ class Handler(BaseRequestHandler):
             return diccBad
         try:
             size = os.stat(absDir).st_size
-            diccGood['file'] = open(absDir, 'rb')
             if exten == '.ppm':
                 if var != '':
                     # ppm con filtro
@@ -111,16 +110,19 @@ class Handler(BaseRequestHandler):
                     f = chs[0]
                     i = float(chs[1])
                     imgFilter = Filtro(absDir, f, i, argms.size[0])
-                    filtrado = imgFilter.main()
-                    diccGood['file'] = '_bits_'
-                    diccGood.update({'byts': filtrado})
-                    diccGood['head'] = self.makeHeader(content['.ppm'], len(filtrado))
+                    with open('temp.ppm', 'wb') as temp:
+                        temp.write(imgFilter.main())
+                        temp.close()
+                    diccGood['file'] = open('temp.ppm', 'rb')
+                    diccGood['head'] = self.makeHeader(content['.ppm'], os.stat('temp.ppm').st_size)
                     return diccGood
                 else:
                     # ppm sin modificar
+                    diccGood['file'] = open(absDir, 'rb')
                     diccGood['head'] = self.makeHeader(content['.ppm'], size)
                     return diccGood
             else:
+                diccGood['file'] = open(absDir, 'rb')
                 diccGood['head'] = self.makeHeader(content[exten], size)
                 return diccGood
         except:
@@ -152,6 +154,6 @@ if __name__ == "__main__":
     )
 
     argms = arg.parse_args()
-    with ForkingTCPServer((argms.ip, argms.port[0]), Handler) as server:
+    with ForkingTCPServer((argms.ip[0], argms.port[0]), Handler) as server:
         server.allow_reuse_address = True
         server.serve_forever()
