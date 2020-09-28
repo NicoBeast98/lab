@@ -112,10 +112,3 @@ class Filtro():
             for by in pix:
                 self.newImg.append(by)
         return self.newImg
-
-
-# TESTING#
-# if __name__ == "__main__":
-#     obj = Filtro('dog.ppm', 'b&w', 1, 1000)
-#     newImg = open('f_dog.ppm', 'wb')
-#     newImg.write(obj.main())
