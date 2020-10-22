@@ -3,6 +3,9 @@ from argparse import ArgumentParser
 from server_tools import ServerTools
 
 
+async def handler():
+    pass
+
 
 if __name__ == "__main__":
     arg = ArgumentParser(
@@ -27,4 +30,4 @@ if __name__ == "__main__":
     )
 
     argms = arg.parse_args()
-    serverTools = ServerTools(argms)
+    st = ServerTools(argms)
