@@ -1,0 +1,2 @@
+tutorial de asyncio: https://youtu.be/Xbl7XjFYsN4?t=1070
+libreria asyncio: https://docs.python.org/3/library/asyncio.html
