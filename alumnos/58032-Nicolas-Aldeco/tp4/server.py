@@ -1,11 +1,48 @@
 import asyncio as asy
 from argparse import ArgumentParser
 from server_tools import ServerTools
+st = None
 
 
-async def handler():
+# Atiendo las conexiones al servidor:
+async def handler(reader, writer):
+    lec = await reader.read(st.get_size())
+    listGet = st.parseGet(lec)
+
+    for p, elem in enumerate(listGet[0].split(' ')):
+        if p == 1:
+            req = elem
+
+    if req == '/' or req == '/index':
+        req = '/index.html'
+
+    resolve = st.fileLookUp(req)
+    # Escribo cabecera, y si hay un error tambien el html de este.
+    writer.write(resolve[1])
+    # Si la peticion fue correcta, envio el archivo.
+    if resolve[0] == 200:
+        with open(st.get_root()+req, 'rb') as file:
+            while True:
+                lec = file.read(st.get_size())
+                if not lec:
+                    break
+                writer.write(lec)
+    await writer.drain()
+    writer.close()
+    await writer.wait_closed()
+
+
+# Armo un log:
+async def logs():
     pass
 
+
+async def main():
+    server = await asy.start_server(
+        handler, st.get_ip(), st.get_port()
+    )
+    async with server:
+        await server.serve_forever()
 
 if __name__ == "__main__":
     arg = ArgumentParser(
@@ -30,4 +67,12 @@ if __name__ == "__main__":
     )
 
     argms = arg.parse_args()
-    st = ServerTools(argms)
+    dicc = {
+        'root': argms.root[0],
+        'port': argms.port[0],
+        'size': argms.size[0],
+        'ip': argms.ip[0]
+    }
+    st = ServerTools(dicc)
+
+    asy.run(main())
