@@ -1,4 +1,5 @@
 import asyncio as asy
+import time
 from argparse import ArgumentParser
 from server_tools import ServerTools
 st = None
@@ -6,9 +7,13 @@ st = None
 
 # Atiendo las conexiones al servidor:
 async def handler(reader, writer):
+    ip, port = writer.get_extra_info('peername')
+    asy.create_task(logs(ip, port))
+
     lec = await reader.read(st.get_size())
     listGet = st.parseGet(lec)
 
+    req = ''
     for p, elem in enumerate(listGet[0].split(' ')):
         if p == 1:
             req = elem
@@ -33,9 +38,12 @@ async def handler(reader, writer):
 
 
 # Armo un log:
-async def logs():
-    pass
-
+async def logs(ip, port):
+    now = time.ctime()
+    log = f'> client: {ip}:{port}; date:{now}\n'
+    with open('logs.txt', 'a') as logs:
+        logs.write(log)
+ 
 
 async def main():
     server = await asy.start_server(
@@ -73,6 +81,8 @@ if __name__ == "__main__":
         'size': argms.size[0],
         'ip': argms.ip[0]
     }
+    # Creo una instancia del obj ServerTools con herramientas
     st = ServerTools(dicc)
-
+    # Creo un index.html con los archivos que esten en el directorio root
+    st.listDirInIndex()
     asy.run(main())

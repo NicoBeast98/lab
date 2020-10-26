@@ -8,6 +8,7 @@ class ServerTools():
         self.port = dicc['port']
         self.size = dicc['size']
         self.ip = dicc['ip']
+        self.lista = ''
 
         # Tipos de contenido aceptados:
         self.content = {
@@ -18,7 +19,7 @@ class ServerTools():
             ".pdf": " application/pdf",
             ".ico": " image/x-ico",
             ".mp4": " video/mp4",
-            ".aac": " audio/aac"
+            ".aac": " audio/aac",
             }
 
     def makeHeader(self, cType, lenth):
@@ -101,3 +102,37 @@ class ServerTools():
             # Error en el servidor
             return [500, self.response500()]
 
+    def listDirInIndex(self):
+        lista = self.rDirList(os.listdir(path=self.root), self.root)
+        # print(lista)
+        body = f'''
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>My Web Server</title>
+        <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+        <meta content="utf-8" http-equiv="encoding">
+    </head>
+    <body>
+        <h1 style='font-style: italic; color:navy;'>Binevenido!</h1>
+        <h2>Estos son los archivos disponibles en el directorio root:</h2>
+        <div>
+            {lista}
+        </div>
+    </body>
+</html>'''
+        with open(self.root + '/index.html', 'w') as index:
+           index.write(body)
+
+
+    def rDirList(self, ldir, dir):
+        ldir.sort(key=lambda elem: elem.find('.') == -1)
+        for elem in ldir:
+            rDir = dir.replace(self.root, '')
+            if elem.find('.') != -1:
+                self.lista += f'\n<ul><a href=\'{rDir}/{elem}\'>{elem}</a></ul>'
+            else:
+                self.lista += f'<ul>\\{elem}'
+                self.rDirList(os.listdir(dir+'/'+elem), dir+'/'+elem)
+        self.lista += '</ul>'
+        return self.lista + '</ul>'
