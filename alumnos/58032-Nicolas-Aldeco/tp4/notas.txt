@@ -1,4 +1,4 @@
 > Preguntar al profe sobre el ipv6. create_server decide en base al nombre de host?
-> Hacer tabla de comparativa de este server con el hecho en el tp 3.
+> Hacer tabla de comparativa de este server con el hecho en el tp 3.[Hecho]
 > Hacer Bonus Track, si te queda tiempo...
 > Videos: https://youtu.be/E7Yn5biBZ58?t=290
