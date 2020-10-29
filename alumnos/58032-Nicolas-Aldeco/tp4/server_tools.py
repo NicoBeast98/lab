@@ -114,8 +114,8 @@ class ServerTools():
         <meta content="utf-8" http-equiv="encoding">
     </head>
     <body>
-        <h1 style='font-style: italic; color:navy;'>Binevenido!</h1>
-        <h2>Estos son los archivos disponibles en el directorio root:</h2>
+        <h1 style='font-style: italic; color:navy;'>Bienvenidos!</h1>
+        <h2>Estos son los archivos disponibles en el directorio raiz:</h2>
         <div>
             {lista}
         </div>
