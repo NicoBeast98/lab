@@ -10,7 +10,7 @@ async def handler(reader, writer):
     ip, port = writer.get_extra_info('peername')
     asy.create_task(logs(ip, port))
 
-    lec = await reader.read(st.get_size())
+    lec = await reader.read(255)
     listGet = st.parseGet(lec)
 
     req = ''
@@ -44,8 +44,12 @@ async def logs(ip, port):
     with open('logs.txt', 'a') as logs:
         logs.write(log)
  
+async def httpGen():
+    st.listDirInIndex()
 
 async def main():
+    # Creo un index.html con los archivos que esten en el directorio root
+    asy.create_task(httpGen())
     server = await asy.start_server(
         handler, st.get_ip(), st.get_port()
     )
@@ -83,6 +87,4 @@ if __name__ == "__main__":
     }
     # Creo una instancia del obj ServerTools con herramientas
     st = ServerTools(dicc)
-    # Creo un index.html con los archivos que esten en el directorio root
-    st.listDirInIndex()
     asy.run(main())
