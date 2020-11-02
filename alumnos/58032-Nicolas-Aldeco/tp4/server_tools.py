@@ -123,7 +123,6 @@ class ServerTools():
 </html>'''
         with open(self.root + '/index.html', 'w') as index:
            index.write(body)
-#        return 0
 
     def rDirList(self, ldir, dir):
         ldir.sort(key=lambda elem: elem.find('.') == -1)
