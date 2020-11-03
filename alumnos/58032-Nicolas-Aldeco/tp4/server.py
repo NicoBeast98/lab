@@ -82,7 +82,7 @@ if __name__ == "__main__":
     dicc = {
         'root': argms.root[0],
         'port': argms.port[0],
-        'size': argms.size,
+        'size': argms.size[0],
         'ip': argms.ip
     }
     # Creo una instancia del obj ServerTools con herramientas
